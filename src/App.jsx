@@ -11,6 +11,7 @@ import Health     from './components/Health'
 import Shopping   from './components/Shopping'
 import Reports    from './components/Reports'
 import Settings   from './components/Settings'
+import WeeklyFood from './components/WeeklyFood'
 
 const VIEWS = {
   dashboard:  <Dashboard />,
@@ -22,6 +23,7 @@ const VIEWS = {
   shopping:   <Shopping />,
   reports:    <Reports />,
   settings:   <Settings />,
+  weeklyFood: <WeeklyFood />,
 }
 
 function Inner() {

@@ -64,6 +64,13 @@ export default function Settings() {
             <label className="text-xs text-gray-100">Date of Birth</label>
             <input type="date" className="input" value={f.dog?.dob || ''} onChange={e => set('dog.dob', e.target.value)} />
           </div>
+          <div className="mt-2">
+            <label className="text-xs text-gray-100">Expected Adult Weight (lbs) — for feeding guide</label>
+            <input type="number" className="input" placeholder="e.g. 80 for a large breed"
+              value={f.food?.expectedAdultLbs || ''}
+              onChange={e => set('food.expectedAdultLbs', Number(e.target.value))} />
+            <p className="text-xs text-gray-100 mt-1">Used by the Purina Pro Plan feeding calculator</p>
+          </div>
         </Section>
 
         {/* Goals */}

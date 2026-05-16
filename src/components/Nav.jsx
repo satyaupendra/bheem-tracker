@@ -9,10 +9,11 @@ const NAV = [
 ]
 
 const MORE = [
-  { view: 'health',   emoji: '💉', label: 'Health' },
-  { view: 'shopping', emoji: '🛒', label: 'Shop' },
-  { view: 'reports',  emoji: '📊', label: 'Reports' },
-  { view: 'settings', emoji: '⚙️',  label: 'Settings' },
+  { view: 'weeklyFood', emoji: '🍗', label: 'Weekly Food' },
+  { view: 'health',     emoji: '💉', label: 'Health' },
+  { view: 'shopping',   emoji: '🛒', label: 'Shop' },
+  { view: 'reports',    emoji: '📊', label: 'Reports' },
+  { view: 'settings',   emoji: '⚙️',  label: 'Settings' },
 ]
 
 export default function Nav() {
