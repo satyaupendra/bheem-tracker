@@ -153,6 +153,4 @@ function Stat({ emoji, val, goal, unit, sub }) {
       {ok    && <div className="text-spark-100 text-xs">✓</div>}
     </div>
   )
-}    </div>
-  )
 }
