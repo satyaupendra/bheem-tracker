@@ -87,7 +87,7 @@ export default function Dashboard() {
               ${dayTasks[t.id]?.done ? 'bg-green-100 border-green-100 text-white' : 'border-gray-50'}`}>
               {dayTasks[t.id]?.done ? '✓' : ''}
             </span>
-            <span className="text-sm text-gray-160">{t.label}</span>
+            <span className="text-sm text-gray-160">{t.emoji} {t.label}</span>
             {dayTasks[t.id]?.ts && (
               <span className="ml-auto text-xs text-gray-100">
                 {new Date(dayTasks[t.id].ts).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}

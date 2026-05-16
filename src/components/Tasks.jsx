@@ -60,7 +60,7 @@ export default function Tasks() {
                 </span>
                 <div className="flex-1 min-w-0">
                   <p className={`font-medium ${done ? 'line-through text-gray-100' : 'text-gray-160'}`}>
-                    {task.label}
+                    {task.emoji} {task.label}
                   </p>
                   {ts && (
                     <p className="text-xs text-green-100 mt-0.5">
