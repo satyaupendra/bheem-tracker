@@ -20,7 +20,6 @@ export default function Reports() {
   const { monthLog, settings, loadMonth } = useApp()
   const [range, setRange] = useState(7)
 
-  const calGoal   = settings?.food?.dailyCalorieGoal || 1200
   const waterGoal = settings?.water?.dailyGoalOz || 32
   const actGoal   = settings?.activity?.dailyGoalMin || 60
 
@@ -42,13 +41,13 @@ export default function Reports() {
     return dt.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
   })
 
-  const calories  = days.map(d => (monthLog[d]?.food || []).reduce((s, e) => s + (Number(e.calories) || 0), 0))
-  const water     = days.map(d => (monthLog[d]?.water || []).reduce((s, e) => s + (Number(e.oz)       || 0), 0))
-  const activity  = days.map(d => (monthLog[d]?.activity || []).reduce((s, e) => s + (Number(e.minutes) || 0), 0))
+  const grams    = days.map(d => (monthLog[d]?.food || []).reduce((s, e) => s + (Number(e.grams)   || 0), 0))
+  const water    = days.map(d => (monthLog[d]?.water || []).reduce((s, e) => s + (Number(e.oz)      || 0), 0))
+  const activity = days.map(d => (monthLog[d]?.activity || []).reduce((s, e) => s + (Number(e.minutes) || 0), 0))
 
-  const avgCal  = calories.length  ? Math.round(calories.reduce((a, b) => a + b, 0) / calories.length)  : 0
-  const avgAct  = activity.length  ? Math.round(activity.reduce((a, b) => a + b, 0) / activity.length)  : 0
-  const avgWater = water.length    ? Math.round(water.reduce((a, b) => a + b, 0) / water.length)         : 0
+  const avgGrams = grams.length    ? Math.round(grams.reduce((a, b) => a + b, 0) / grams.length)       : 0
+  const avgAct   = activity.length ? Math.round(activity.reduce((a, b) => a + b, 0) / activity.length) : 0
+  const avgWater = water.length    ? Math.round(water.reduce((a, b) => a + b, 0) / water.length)       : 0
 
   const makeDataset = (data, color, fill = false) => ({
     data,
@@ -75,21 +74,24 @@ export default function Reports() {
 
       {/* Summary cards */}
       <div className="mx-4 grid grid-cols-3 gap-2 mb-4">
-        <SummaryCard emoji="🔥" label="Avg Cal" val={avgCal} goal={calGoal} unit="cal" />
+        <SummaryCard emoji="⚖️" label="Avg Food" val={avgGrams > 0 ? `${avgGrams}g` : '—'} />
         <SummaryCard emoji="💧" label="Avg Water" val={avgWater} goal={waterGoal} unit="oz" />
         <SummaryCard emoji="🏃" label="Avg Walk" val={avgAct} goal={actGoal} unit="min" />
       </div>
 
       <div className="mx-4 space-y-4">
-        <ChartCard title="🔥 Calories" color="#0053e2">
-          <Bar data={{ labels, datasets: [{ ...makeDataset(calories, '#0053e2'), backgroundColor: calories.map(v => v >= calGoal ? '#2a8703' : '#0053e2') }] }} options={CHART_OPTS} />
+        <ChartCard title="⚖️ Food eaten (grams)">
+          <Bar
+            data={{ labels, datasets: [{ ...makeDataset(grams, '#0053e2'), backgroundColor: grams.map(v => v > 0 ? '#0053e2' : '#d9d9d9') }] }}
+            options={{ ...CHART_OPTS, scales: { ...CHART_OPTS.scales, y: { ...CHART_OPTS.scales.y, ticks: { callback: v => `${v}g` } } } }}
+          />
         </ChartCard>
 
-        <ChartCard title="💧 Water Intake (oz)" color="#0053e2">
+        <ChartCard title="💧 Water Intake (oz)">
           <Line data={{ labels, datasets: [makeDataset(water, '#0053e2', true)] }} options={CHART_OPTS} />
         </ChartCard>
 
-        <ChartCard title="🏃 Activity (minutes)" color="#2a8703">
+        <ChartCard title="🏃 Activity (minutes)">
           <Bar data={{ labels, datasets: [{ ...makeDataset(activity, '#2a8703'), backgroundColor: activity.map(v => v >= actGoal ? '#2a8703' : '#ffc220') }] }} options={CHART_OPTS} />
         </ChartCard>
       </div>
@@ -98,13 +100,13 @@ export default function Reports() {
 }
 
 function SummaryCard({ emoji, label, val, goal, unit }) {
-  const ok = val >= goal
+  const hasGoal = goal != null
+  const ok = hasGoal && Number(val) >= goal
   return (
     <div className={`bg-white rounded-2xl p-3 shadow-sm text-center border-2 ${ok ? 'border-green-100' : 'border-transparent'}`}>
       <div className="text-xl">{emoji}</div>
-      <div className="font-bold text-gray-160 text-sm">{val}</div>
-      <div className="text-xs text-gray-100">{unit}</div>
-      <div className={`text-xs mt-0.5 ${ok ? 'text-green-100' : 'text-gray-100'}`}>{ok ? '✓ goal' : `goal: ${goal}`}</div>
+      <div className="font-bold text-gray-160 text-sm">{val}{unit && !String(val).includes(unit) ? ` ${unit}` : ''}</div>
+      {hasGoal && <div className={`text-xs mt-0.5 ${ok ? 'text-green-100' : 'text-gray-100'}`}>{ok ? '✓ goal' : `goal: ${goal}${unit}`}</div>}
       <div className="text-xs text-gray-100 mt-0.5">{label}</div>
     </div>
   )
