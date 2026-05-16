@@ -30,11 +30,14 @@ export default defineConfig({
       },
       workbox: {
         globPatterns: ['**/*.{js,css,html,ico,png,svg}'],
+        // Force clients to use new SW immediately (don't wait for all tabs to close)
+        skipWaiting: true,
+        clientsClaim: true,
         runtimeCaching: [
           {
             urlPattern: /^https:\/\/api\.github\.com\/.*/i,
             handler: 'NetworkFirst',
-            options: { cacheName: 'github-api-cache', expiration: { maxEntries: 50, maxAgeSeconds: 300 } }
+            options: { cacheName: 'github-api-cache-v2', expiration: { maxEntries: 50, maxAgeSeconds: 60 } }
           }
         ]
       }
