@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { useApp } from '../context/AppContext'
 import { toDisplayDate } from '../utils/helpers'
+import { fmtCupsNice, entryToCups } from '../utils/feedingGuide'
 
 export default function Dashboard() {
   const { settings, getDayLog, tasks, selectedDate, setView, getPhotoUrl } = useApp()
@@ -9,12 +10,13 @@ export default function Dashboard() {
   const dayTasks = tasks[selectedDate] || {}
   const dailyTasks = settings?.tasks?.daily || []
 
-  const totalCal  = (day.food     || []).reduce((s, e) => s + (Number(e.calories) || 0), 0)
-  const totalWater = (day.water   || []).reduce((s, e) => s + (Number(e.oz)       || 0), 0)
-  const totalMin  = (day.activity || []).reduce((s, e) => s + (Number(e.minutes)  || 0), 0)
-  const calGoal   = settings?.food?.dailyCalorieGoal || 1200
-  const waterGoal = settings?.water?.dailyGoalOz || 32
-  const actGoal   = settings?.activity?.dailyGoalMin || 60
+  const gramsPerCup  = Number(settings?.food?.gramsPerCup || 106)
+  const totalGrams = (day.food     || []).reduce((s, e) => s + (Number(e.grams)  || 0), 0)
+  const totalCups  = (day.food     || []).reduce((s, e) => s + entryToCups(e, gramsPerCup), 0)
+  const totalWater = (day.water    || []).reduce((s, e) => s + (Number(e.oz)     || 0), 0)
+  const totalMin   = (day.activity || []).reduce((s, e) => s + (Number(e.minutes)|| 0), 0)
+  const waterGoal  = settings?.water?.dailyGoalOz    || 32
+  const actGoal    = settings?.activity?.dailyGoalMin || 60
 
   const doneTasks = dailyTasks.filter(t => dayTasks[t.id]?.done).length
   const pct = dailyTasks.length > 0 ? Math.round((doneTasks / dailyTasks.length) * 100) : 0
@@ -36,7 +38,7 @@ export default function Dashboard() {
         <div className="flex items-center gap-4 mt-4">
           <Ring pct={pct} done={doneTasks} total={dailyTasks.length} />
           <div className="flex-1 grid grid-cols-3 gap-2">
-            <Stat emoji="🔥" val={totalCal} goal={calGoal} unit="cal" />
+            <Stat emoji="🍗" val={totalGrams > 0 ? `${totalGrams}g` : '0g'} sub={totalCups > 0 ? `${fmtCupsNice(totalCups)} cups` : null} />
             <Stat emoji="💧" val={totalWater} goal={waterGoal} unit="oz" />
             <Stat emoji="🏃" val={totalMin} goal={actGoal} unit="min" />
           </div>
@@ -140,14 +142,17 @@ function Ring({ pct, done, total }) {
   )
 }
 
-function Stat({ emoji, val, goal, unit }) {
-  const ok = val >= goal
+function Stat({ emoji, val, goal, unit, sub }) {
+  const ok = goal != null && Number(val) >= goal
   return (
     <div className="bg-white/10 rounded-xl p-2 text-center">
       <div className="text-base">{emoji}</div>
       <div className="text-white text-sm font-bold leading-none mt-0.5">{val}</div>
-      <div className="text-blue-50 text-xs">/{goal}{unit}</div>
-      {ok && <div className="text-spark-100 text-xs">✓</div>}
+      {goal != null && <div className="text-blue-50 text-xs">/{goal}{unit}</div>}
+      {sub   && <div className="text-blue-50 text-xs">{sub}</div>}
+      {ok    && <div className="text-spark-100 text-xs">✓</div>}
     </div>
+  )
+}    </div>
   )
 }
