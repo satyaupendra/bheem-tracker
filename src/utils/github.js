@@ -19,7 +19,11 @@ export async function getFile(token, owner, repo, path) {
   if (res.status === 404) return { content: null, sha: null }
   if (!res.ok) throw new Error(`GitHub GET ${path}: ${res.status}`)
   const data = await res.json()
-  const content = JSON.parse(atob(data.content.replace(/\n/g, '')))
+  // atob() gives Latin-1 bytes — use TextDecoder to get proper UTF-8 (emoji safe)
+  const binary = atob(data.content.replace(/\n/g, ''))
+  const bytes  = Uint8Array.from(binary, c => c.charCodeAt(0))
+  const text   = new TextDecoder('utf-8').decode(bytes)
+  const content = JSON.parse(text)
   return { content, sha: data.sha }
 }
 
