@@ -73,13 +73,19 @@ export default function Settings() {
           </div>
         </Section>
 
-        {/* Goals */}
-        <Section title="🎯 Daily Goals">
+        {/* Food & Goals */}
+        <Section title="🍗 Food & Portions">
           <Label>Daily Calorie Goal</Label>
           <input type="number" className="input" value={f.food?.dailyCalorieGoal || ''} onChange={e => set('food.dailyCalorieGoal', Number(e.target.value))} />
-          <Label className="mt-2">Daily Water Goal (oz)</Label>
+          <Label className="mt-3">Grams per cup — for auto cup → cups calculation</Label>
+          <input type="number" className="input" placeholder="e.g. 106" value={f.food?.gramsPerCup || ''}
+            onChange={e => set('food.gramsPerCup', Number(e.target.value))} />
+          <p className="text-xs text-gray-100 mt-1">
+            Purina Pro Plan Large Breed Puppy ≈ 106g/cup. Check the bag label for exact density.
+          </p>
+          <Label className="mt-3">Daily Water Goal (oz)</Label>
           <input type="number" className="input" value={f.water?.dailyGoalOz || ''} onChange={e => set('water.dailyGoalOz', Number(e.target.value))} />
-          <Label className="mt-2">Daily Activity Goal (minutes)</Label>
+          <Label className="mt-3">Daily Activity Goal (minutes)</Label>
           <input type="number" className="input" value={f.activity?.dailyGoalMin || ''} onChange={e => set('activity.dailyGoalMin', Number(e.target.value))} />
         </Section>
 

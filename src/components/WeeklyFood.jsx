@@ -6,7 +6,7 @@ import {
 } from 'chart.js'
 import { useApp } from '../context/AppContext'
 import {
-  ageInMonths, getRecommendation, parseCups,
+  ageInMonths, getRecommendation, entryToCups, fmtCupsNice,
   weekStart, weekDays, monthsForDays, FEEDING_CHART,
 } from '../utils/feedingGuide'
 import { toDisplayDate, monthPath } from '../utils/helpers'
@@ -17,15 +17,15 @@ ChartJS.register(CategoryScale, LinearScale, BarElement, Tooltip, Legend)
 // ── Helpers ──────────────────────────────────────────────────────────────────
 
 const fmt = (n) => Math.round(n * 4) / 4          // round to nearest ¼
-const fmtCups = (n) => n === 0 ? '—' : `${fmt(n)} cups`
+const fmtCups = (n) => n === 0 ? '—' : `${fmtCupsNice(n)} cups`
 
-function dayTotal(dayLog) {
+/** Derive cups for a whole day, using grams÷gramsPerCup when available */
+function dayTotal(dayLog, gramsPerCup = 106) {
   const entries = dayLog?.food || []
-  const cups  = entries.reduce((s, e) => s + parseCups(e.cups),  0)
+  const cups  = entries.reduce((s, e) => s + entryToCups(e, gramsPerCup), 0)
   const grams = entries.reduce((s, e) => s + (Number(e.grams) || 0), 0)
-  const kcal  = entries.reduce((s, e) => s + (Number(e.calories) || 0), 0)
   const meals = entries.length
-  return { cups, grams, kcal, meals }
+  return { cups, grams, meals }
 }
 
 // ── Main component ────────────────────────────────────────────────────────────
@@ -36,6 +36,7 @@ export default function WeeklyFood() {
   // dog profile
   const dog            = settings?.dog      || {}
   const expectedLbs    = Number(settings?.food?.expectedAdultLbs || 0)
+  const gramsPerCup    = Number(settings?.food?.gramsPerCup      || 106)
   const dob            = dog.dob            || ''
   const ageNow         = ageInMonths(dob)
 
@@ -58,10 +59,9 @@ export default function WeeklyFood() {
   }, [weekMon, todayKey])
 
   // per-day stats
-  const dayStats = days.map(dk => ({ dateKey: dk, ...dayTotal(monthLog[dk]) }))
+  const dayStats = days.map(dk => ({ dateKey: dk, ...dayTotal(monthLog[dk], gramsPerCup) }))
   const weekTotalCups  = dayStats.reduce((s, d) => s + d.cups,  0)
   const weekTotalGrams = dayStats.reduce((s, d) => s + d.grams, 0)
-  const weekTotalKcal  = dayStats.reduce((s, d) => s + d.kcal,  0)
   const loggedDays     = dayStats.filter(d => d.meals > 0).length
   const avgCupsPerDay  = loggedDays > 0 ? weekTotalCups / loggedDays : 0
 
@@ -95,9 +95,9 @@ export default function WeeklyFood() {
 
         {/* Summary cards */}
         <div className="grid grid-cols-3 gap-2">
-          <SummaryCard emoji="🥄" label="Total cups" val={fmtCups(weekTotalCups)} sub={`${loggedDays}/7 days logged`} />
-          <SummaryCard emoji="⚖️" label="Total grams" val={weekTotalGrams > 0 ? `${weekTotalGrams}g` : '—'} sub="this week" />
-          <SummaryCard emoji="🔥" label="Total kcal" val={weekTotalKcal > 0 ? weekTotalKcal : '—'} sub="this week" />
+          <SummaryCard emoji="🥣" label="Total cups" val={fmtCups(weekTotalCups)} sub={`${loggedDays}/7 days logged`} />
+          <SummaryCard emoji="⚖️" label="Total grams" val={weekTotalGrams > 0 ? `${weekTotalGrams}g` : '—'} sub={`1 cup = ${gramsPerCup}g`} />
+          <SummaryCard emoji="🌖" label="Days logged" val={loggedDays} sub="out of 7" />
         </div>
 
         {/* Chart */}

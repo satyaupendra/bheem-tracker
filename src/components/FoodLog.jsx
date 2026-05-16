@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { useApp } from '../context/AppContext'
-import { toTimeStr } from '../utils/helpers'
+import { fmtCupsNice } from '../utils/feedingGuide'
 import PageHeader from './PageHeader'
 
 const MEAL_TYPES = ['Breakfast', 'Lunch', 'Dinner', 'Snack', 'Treat']
@@ -10,11 +10,12 @@ export default function FoodLog() {
   const { getDayLog, addFood, addWater, deleteFood, settings, selectedDate, syncing } = useApp()
   const day = getDayLog(selectedDate)
   const cups = settings?.food?.cupSizes || CUP_SIZES
+  const gramsPerCup = Number(settings?.food?.gramsPerCup || 106)
 
   const [tab, setTab]  = useState('food')
 
-  const totalCal   = (day.food  || []).reduce((s, e) => s + (Number(e.calories) || 0), 0)
-  const totalWater = (day.water || []).reduce((s, e) => s + (Number(e.oz)       || 0), 0)
+  const totalGrams = (day.food  || []).reduce((s, e) => s + (Number(e.grams) || 0), 0)
+  const totalWater = (day.water || []).reduce((s, e) => s + (Number(e.oz)   || 0), 0)
 
   return (
     <div>
@@ -26,14 +27,14 @@ export default function FoodLog() {
           <button key={t} onClick={() => setTab(t)}
             className={`flex-1 py-2 rounded-lg text-sm font-semibold transition-colors
               ${tab === t ? 'bg-white text-blue-100 shadow-sm' : 'text-gray-100'}`}>
-            {t === 'food' ? `🍖 Food (${totalCal} cal)` : `💧 Water (${totalWater} oz)`}
+            {t === 'food' ? `🍗 Food (${totalGrams > 0 ? totalGrams + 'g' : '0g'})` : `💧 Water (${totalWater} oz)`}
           </button>
         ))}
       </div>
 
       {tab === 'food' && (
         <>
-          <FoodForm onAdd={addFood} cups={cups} syncing={syncing} />
+          <FoodForm onAdd={addFood} cups={cups} gramsPerCup={gramsPerCup} syncing={syncing} />
           <LogList entries={day.food || []} onDelete={deleteFood}
             renderItem={e => (
               <div className="flex-1 min-w-0">
@@ -42,7 +43,9 @@ export default function FoodLog() {
                   <span className="text-gray-100 text-sm ml-2">{e.calories ? `${e.calories} cal` : ''}</span>
                 </div>
                 <div className="text-xs text-gray-100 mt-0.5">
-                  {e.mealType}{e.cups ? ` · ${e.cups} cup(s)` : ''}{e.grams ? ` · ${e.grams}g` : ''}
+                  {e.mealType}
+                  {e.grams ? ` · ${e.grams}g ≈ ${fmtCupsNice(Number(e.grams) / 106)} cups` : ''}
+                  {!e.grams && e.cups ? ` · ${e.cups}` : ''}
                   {e.ts && ` · ${new Date(e.ts).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`}
                 </div>
                 {e.notes && <p className="text-xs text-gray-100 mt-0.5 italic">{e.notes}</p>}
@@ -69,11 +72,14 @@ export default function FoodLog() {
   )
 }
 
-function FoodForm({ onAdd, cups, syncing }) {
+function FoodForm({ onAdd, cups, gramsPerCup, syncing }) {
   const EMPTY = { name: '', mealType: 'Breakfast', calories: '', cups: '', grams: '', notes: '' }
   const [f, setF] = useState(EMPTY)
   const [open, setOpen] = useState(false)
   const set = (k, v) => setF(p => ({ ...p, [k]: v }))
+
+  // Live cup equivalent from grams
+  const gramsCups = f.grams ? Number(f.grams) / gramsPerCup : null
 
   const submit = async () => {
     if (!f.name) return
@@ -100,11 +106,19 @@ function FoodForm({ onAdd, cups, syncing }) {
           </div>
           <div className="grid grid-cols-2 gap-2">
             <select className="input" value={f.cups} onChange={e => set('cups', e.target.value)}>
-              <option value="">Measuring cup…</option>
+              <option value="">Cup size (optional)</option>
               {cups.map(c => <option key={c.label} value={c.label}>{c.label}</option>)}
               <option value="eyeball">👀 Eyeballing it</option>
             </select>
-            <input className="input" type="number" placeholder="Weight (g)" value={f.grams} onChange={e => set('grams', e.target.value)} />
+            <div>
+              <input className="input" type="number" placeholder={`Grams (1 cup = ${gramsPerCup}g)`} value={f.grams}
+                onChange={e => set('grams', e.target.value)} />
+              {gramsCups !== null && (
+                <p className="text-xs text-blue-100 mt-1 font-medium">
+                  ≈ {fmtCupsNice(gramsCups)} cup{gramsCups !== 1 ? 's' : ''}
+                </p>
+              )}
+            </div>
           </div>
           <textarea className="input resize-none" rows={2} placeholder="Notes…" value={f.notes} onChange={e => set('notes', e.target.value)} />
           <div className="flex gap-2">

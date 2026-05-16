@@ -42,6 +42,7 @@ export const DEFAULT_SETTINGS = {
   dog: { name: 'Bheem', breed: '', weight: '', weightUnit: 'lbs', dob: '' },
   food: {
     dailyCalorieGoal: 1200,
+    gramsPerCup: 106,          // Purina Pro Plan Large Breed Puppy ≈ 106g/cup
     cupSizes: [
       { label: '1/4 cup', ml: 60 },
       { label: '1/3 cup', ml: 79 },

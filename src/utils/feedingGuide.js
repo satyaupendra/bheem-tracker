@@ -118,6 +118,27 @@ export function parseCups(val) {
   return Number(s) || 0
 }
 
+/**
+ * Derive cups from a food log entry.
+ * Priority: grams (÷ gramsPerCup) > explicit cups field.
+ * This means you only need to log grams — cups are calculated automatically.
+ */
+export function entryToCups(entry, gramsPerCup = 106) {
+  const g = Number(entry.grams) || 0
+  if (g > 0) return g / gramsPerCup
+  return parseCups(entry.cups)
+}
+
+/** Format cups to nearest ¼, e.g. 1.75 → "1¾" */
+export function fmtCupsNice(n) {
+  if (!n || n === 0) return '—'
+  const whole = Math.floor(n)
+  const frac  = Math.round((n - whole) * 4) // quarters
+  const fracStr = ['', '¼', '½', '¾', ''][frac] ?? ''
+  if (whole === 0) return fracStr || '< ¼'
+  return fracStr ? `${whole}${fracStr}` : `${whole}`
+}
+
 /** Monday of the week containing a given date */
 export function weekStart(dateKey) {
   const d = new Date(dateKey + 'T12:00:00')
