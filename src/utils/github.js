@@ -10,6 +10,32 @@ const headers = (token) => ({
   'Content-Type': 'application/json',
 })
 
+/**
+ * Encode a JS object to base64 JSON that is 100% ASCII-safe.
+ * Every non-ASCII char (emoji, accented letters, etc.) becomes \uXXXX,
+ * so btoa() never chokes, and JSON.parse restores them perfectly on any reader.
+ */
+function toBase64Json(obj) {
+  const json = JSON.stringify(obj, null, 2)
+    .replace(/[\u0080-\uFFFF]/g, c =>
+      `\\u${c.charCodeAt(0).toString(16).padStart(4, '0')}`
+    )
+  return btoa(json)
+}
+
+/** Decode base64 JSON from GitHub — handles both ASCII-escaped and raw UTF-8 variants. */
+function fromBase64Json(b64) {
+  const raw = atob(b64.replace(/\n/g, ''))
+  try {
+    // Try plain parse first (works when content is ASCII-escaped JSON)
+    return JSON.parse(raw)
+  } catch {
+    // Fall back: raw bytes are UTF-8 — decode properly
+    const bytes = Uint8Array.from(raw, c => c.charCodeAt(0))
+    return JSON.parse(new TextDecoder('utf-8').decode(bytes))
+  }
+}
+
 // ── File ops ────────────────────────────────────────────────────────────────
 
 export async function getFile(token, owner, repo, path) {
@@ -19,18 +45,14 @@ export async function getFile(token, owner, repo, path) {
   if (res.status === 404) return { content: null, sha: null }
   if (!res.ok) throw new Error(`GitHub GET ${path}: ${res.status}`)
   const data = await res.json()
-  // atob() gives Latin-1 bytes — use TextDecoder to get proper UTF-8 (emoji safe)
-  const binary = atob(data.content.replace(/\n/g, ''))
-  const bytes  = Uint8Array.from(binary, c => c.charCodeAt(0))
-  const text   = new TextDecoder('utf-8').decode(bytes)
-  const content = JSON.parse(text)
+  const content = fromBase64Json(data.content)
   return { content, sha: data.sha }
 }
 
 export async function putFile(token, owner, repo, path, content, sha, message) {
   const body = {
     message,
-    content: btoa(unescape(encodeURIComponent(JSON.stringify(content, null, 2)))),
+    content: toBase64Json(content),
     ...(sha ? { sha } : {}),
   }
   const res = await fetch(`${BASE}/repos/${owner}/${repo}/contents/${path}`, {
