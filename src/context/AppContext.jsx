@@ -9,14 +9,13 @@ import {
 // ── State shape ──────────────────────────────────────────────────────────────
 
 const INIT = {
-  config: null,         // { token, owner, dataRepo }
-  settings: null,       // dog profile, goals, cup sizes
-  monthLog: {},         // { [dateKey]: { food:[], water:[], activity:[] } }
-  tasks: {},            // { [dateKey]: { [taskId]: { done, ts } } }
-  todos: [],            // [{ id, text, category, done, createdAt, doneAt }]
-  health: [],           // [{ id, type, date, notes, nextDate }]
-  shopping: [],         // [{ id, text, done, addedAt }]
-  shaCache: {},         // { [path]: sha }
+  config: null,
+  settings: null,
+  monthLog: {},         // { [dateKey]: { food:[], water:[], activity:[], tasks:{} } }
+  todos: [],
+  health: [],
+  shopping: [],
+  shaCache: {},
   view: 'dashboard',
   selectedDate: toDateKey(),
   loading: true,
@@ -47,8 +46,6 @@ function reducer(state, action) {
       return { ...state, shaCache: { ...state.shaCache, [action.path]: action.sha } }
     case 'SET_MONTH_LOG':
       return { ...state, monthLog: { ...state.monthLog, ...action.log } }
-    case 'SET_TASKS':
-      return { ...state, tasks: { ...state.tasks, ...action.tasks } }
     case 'SET_TODOS':
       return { ...state, todos: action.todos }
     case 'SET_HEALTH':
@@ -226,34 +223,21 @@ export function AppProvider({ children }) {
     await saveDayLog(dateKey, updated)
   }, [state.selectedDate, getDayLog, saveDayLog])
 
-  // ── Tasks ─────────────────────────────────────────────────────────────────
+  // ── Tasks — stored inside monthLog[dateKey].tasks, not a separate state ────
 
   const toggleTask = useCallback(async (taskId) => {
     const dateKey = state.selectedDate
-    const dayTasks = state.tasks[dateKey] || {}
-    const current = dayTasks[taskId]
-    const updated = {
-      ...state.tasks,
-      [dateKey]: { ...dayTasks, [taskId]: current?.done
+    const day     = getDayLog(dateKey)
+    const current = day.tasks?.[taskId]
+    const newTasks = {
+      ...(day.tasks || {}),
+      [taskId]: current?.done
         ? { done: false, ts: null }
-        : { done: true, ts: nowISO() }
-      },
+        : { done: true,  ts: nowISO() },
     }
-    dispatch({ type: 'SET_TASKS', tasks: updated })
-    dispatch({ type: 'SYNCING', val: true })
-    try {
-      const day = getDayLog(dateKey)
-      const month = dateKey.slice(0, 7)
-      const monthData = { ...state.monthLog }
-      monthData[dateKey] = { ...day, tasks: updated[dateKey] }
-      dispatch({ type: 'SET_MONTH_LOG', log: monthData })
-      await syncFile(monthPath(month), monthData, `✅ task ${taskId} on ${dateKey}`)
-    } catch (e) {
-      dispatch({ type: 'ERROR', msg: e.message })
-    } finally {
-      dispatch({ type: 'SYNCING', val: false })
-    }
-  }, [state.selectedDate, state.tasks, state.monthLog, getDayLog, syncFile])
+    const updatedDay = { ...day, tasks: newTasks }
+    await saveDayLog(dateKey, updatedDay)
+  }, [state.selectedDate, getDayLog, saveDayLog])
 
   // ── Todos ─────────────────────────────────────────────────────────────────
 

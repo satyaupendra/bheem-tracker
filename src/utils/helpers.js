@@ -1,11 +1,17 @@
-// Date/key helpers
+// Date/key helpers — all LOCAL time (never UTC, avoids timezone day-flip)
 
-export const toDateKey   = (d = new Date()) => d.toISOString().slice(0, 10)          // 2025-05-16
-export const toMonthKey  = (d = new Date()) => d.toISOString().slice(0, 7)          // 2025-05
-export const toTimeStr   = (d = new Date()) => d.toTimeString().slice(0, 5)          // 14:27
+const pad = (n) => String(n).padStart(2, '0')
+
+export const toDateKey = (d = new Date()) =>
+  `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`
+
+export const toMonthKey = (d = new Date()) =>
+  `${d.getFullYear()}-${pad(d.getMonth() + 1)}`
+
+export const toTimeStr    = (d = new Date()) => d.toTimeString().slice(0, 5)
 export const toDisplayDate = (key) => new Date(key + 'T12:00:00').toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })
-export const nowISO      = ()      => new Date().toISOString()
-export const uid         = ()      => Math.random().toString(36).slice(2, 9)
+export const nowISO       = ()      => new Date().toISOString()
+export const uid          = ()      => Math.random().toString(36).slice(2, 9)
 
 export const monthPath   = (monthKey) => `logs/${monthKey}.json`
 export const photoPath   = (dateKey, ext = 'jpg') => `photos/${dateKey}.${ext}`

@@ -45,6 +45,19 @@ export default function Settings() {
     }
   }
 
+  const clearCache = async () => {
+    if (!window.confirm('Clear app cache? This fixes emoji/display bugs. The page will reload.')) return
+    if ('serviceWorker' in navigator) {
+      const regs = await navigator.serviceWorker.getRegistrations()
+      await Promise.all(regs.map(r => r.unregister()))
+    }
+    if ('caches' in window) {
+      const keys = await caches.keys()
+      await Promise.all(keys.map(k => caches.delete(k)))
+    }
+    window.location.reload(true)
+  }
+
   return (
     <div>
       <PageHeader title="Settings ⚙️" />
@@ -112,10 +125,14 @@ export default function Settings() {
 
         {/* Danger zone */}
         <Section title="⚠️ Danger Zone">
+          <button onClick={clearCache}
+            className="w-full bg-spark-10 text-spark-140 border border-spark-100 rounded-xl py-2 text-sm font-semibold mb-2">
+            💥 Clear App Cache (fixes emoji / display bugs)
+          </button>
           <button onClick={clearData} className="w-full bg-red-10 text-red-100 border border-red-100 rounded-xl py-2 text-sm font-semibold">
             Reset Local Config (re-run setup)
           </button>
-          <p className="text-xs text-gray-100 mt-2 text-center">Your GitHub data is safe — this only clears the local config.</p>
+          <p className="text-xs text-gray-100 mt-2 text-center">Your GitHub data is always safe — these only clear local caches.</p>
         </Section>
       </div>
     </div>

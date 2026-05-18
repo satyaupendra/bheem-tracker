@@ -63,7 +63,10 @@ export async function getImageUrl(token, owner, repo, path) {
   if (res.status === 404) return null
   if (!res.ok) return null
   const data = await res.json()
-  return data.download_url
+  // download_url requires auth for private repos — can't use in <img src>.
+  // Return a data: URL from the base64 content instead.
+  const b64 = data.content.replace(/\n/g, '')
+  return `data:image/jpeg;base64,${b64}`
 }
 
 // ── Repo creation ────────────────────────────────────────────────────────────

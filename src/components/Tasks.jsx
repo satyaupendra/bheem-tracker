@@ -13,9 +13,9 @@ const TODO_CATS = [
 ]
 
 export default function Tasks() {
-  const { settings, tasks, selectedDate, toggleTask, todos, addTodo, toggleTodo, deleteTodo, syncing } = useApp()
+  const { settings, getDayLog, selectedDate, toggleTask, todos, addTodo, toggleTodo, deleteTodo, syncing } = useApp()
   const dailyTasks = settings?.tasks?.daily || []
-  const dayTasks   = tasks[selectedDate] || {}
+  const dayTasks   = getDayLog(selectedDate).tasks || {}
   const [tab, setTab]    = useState('daily')
   const [newTodo, setNewTodo] = useState('')
   const [cat, setCat]    = useState('general')

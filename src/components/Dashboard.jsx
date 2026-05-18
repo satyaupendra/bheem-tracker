@@ -4,10 +4,10 @@ import { toDisplayDate } from '../utils/helpers'
 import { fmtCupsNice, entryToCups } from '../utils/feedingGuide'
 
 export default function Dashboard() {
-  const { settings, getDayLog, tasks, selectedDate, setView, getPhotoUrl } = useApp()
-  const dog  = settings?.dog || {}
-  const day  = getDayLog(selectedDate)
-  const dayTasks = tasks[selectedDate] || {}
+  const { settings, getDayLog, selectedDate, setView, getPhotoUrl } = useApp()
+  const dog        = settings?.dog || {}
+  const day        = getDayLog(selectedDate)
+  const dayTasks   = day.tasks || {}
   const dailyTasks = settings?.tasks?.daily || []
 
   const gramsPerCup  = Number(settings?.food?.gramsPerCup || 106)
