@@ -2,7 +2,19 @@ import { useState } from 'react'
 import { useApp } from '../context/AppContext'
 import PageHeader from './PageHeader'
 
-const ACTIVITY_TYPES = ['Walk 🦮', 'Run 🏃', 'Play 🎾', 'Swim 🏊', 'Training 🎓', 'Other']
+const ACTIVITY_TYPES = [
+  { value: 'Walk',     emoji: '🦨' },
+  { value: 'Run',      emoji: '🏃' },
+  { value: 'Play',     emoji: '🎾' },
+  { value: 'Swim',     emoji: '🏖' },
+  { value: 'Training', emoji: '🎓' },
+  { value: 'Other',    emoji: '📝' },
+]
+
+const activityLabel = (val) => {
+  const t = ACTIVITY_TYPES.find(a => a.value === val || val?.startsWith(a.value))
+  return t ? `${t.emoji} ${t.value}` : (val || 'Activity')
+}
 
 export default function ActivityLog() {
   const { getDayLog, addActivity, deleteActivity, selectedDate, syncing, settings } = useApp()
@@ -39,7 +51,7 @@ export default function ActivityLog() {
               <div key={e.id} className="bg-white rounded-2xl p-4 shadow-sm flex items-start gap-3">
                 <div className="flex-1">
                   <div className="flex justify-between">
-                    <span className="font-medium text-gray-160">{e.type || 'Activity'}</span>
+                    <span className="font-medium text-gray-160">{activityLabel(e.type)}</span>
                     <span className="text-green-100 font-bold">{e.minutes} min</span>
                   </div>
                   <div className="text-xs text-gray-100 mt-0.5">
@@ -58,7 +70,7 @@ export default function ActivityLog() {
 }
 
 function ActivityForm({ onAdd, syncing }) {
-  const EMPTY = { type: 'Walk 🦮', minutes: '', distance: '', distUnit: 'mi', notes: '' }
+  const EMPTY = { type: 'Walk', minutes: '', distance: '', distUnit: 'mi', notes: '' }
   const [f, setF] = useState(EMPTY)
   const [open, setOpen] = useState(false)
   const set = (k, v) => setF(p => ({ ...p, [k]: v }))
@@ -82,7 +94,9 @@ function ActivityForm({ onAdd, syncing }) {
         <div className="bg-white rounded-2xl p-4 shadow-sm space-y-3">
           <h3 className="font-bold text-gray-160">Log Activity</h3>
           <select className="input" value={f.type} onChange={e => set('type', e.target.value)}>
-            {ACTIVITY_TYPES.map(t => <option key={t}>{t}</option>)}
+            {ACTIVITY_TYPES.map(t => (
+              <option key={t.value} value={t.value}>{t.emoji} {t.value}</option>
+            ))}
           </select>
 
           <div>

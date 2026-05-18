@@ -26,14 +26,15 @@ function toBase64Json(obj) {
 /** Decode base64 JSON from GitHub — handles both ASCII-escaped and raw UTF-8 variants. */
 function fromBase64Json(b64) {
   const raw = atob(b64.replace(/\n/g, ''))
-  try {
-    // Try plain parse first (works when content is ASCII-escaped JSON)
-    return JSON.parse(raw)
-  } catch {
-    // Fall back: raw bytes are UTF-8 — decode properly
+  // If any byte is > 127 the content is raw UTF-8 (old btoa+encodeURIComponent format).
+  // We must run TextDecoder BEFORE JSON.parse — garbled UTF-8 is still valid JSON
+  // so try/catch never helps here; only the byte-level check works.
+  const hasHighBytes = raw.split('').some(c => c.charCodeAt(0) > 127)
+  if (hasHighBytes) {
     const bytes = Uint8Array.from(raw, c => c.charCodeAt(0))
     return JSON.parse(new TextDecoder('utf-8').decode(bytes))
   }
+  return JSON.parse(raw)
 }
 
 // ── File ops ────────────────────────────────────────────────────────────────
